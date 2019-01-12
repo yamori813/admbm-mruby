@@ -21,8 +21,12 @@ CROSS_CFLAGS += -pipe -mlong-calls
 
 OBJS = start.o main.o syscalls.o
 
-main.elf : $(OBJS)
+main.bin.bz2.uboot : $(OBJS)
 	$(CROSS)-ld $(CROSS_LDFLAGS) -T main.ld -o main.elf $(OBJS) $(CROSS_LIBS)
+	$(CROSS)-objcopy -O binary main.elf main.bin
+	bzip2 -f main.bin
+	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby VM image' -d main.bin.bz2 main.bin.bz2.uboot
+
 
 start.o : start.S
 	$(CROSS)-as -o start.o start.S
@@ -35,4 +39,4 @@ syscalls.o : syscalls.c
 	$(CROSS)-cc $(CROSS_CFLAGS) -o syscalls.o -c syscalls.c
 
 clean:
-	rm -rf main.elf *.o hoge.c
+	rm -rf main.elf *.o hoge.c *.uboot *.bz2
