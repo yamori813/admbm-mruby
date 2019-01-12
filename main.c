@@ -4,9 +4,6 @@
 
 #include "hoge.c"
 
-extern char _end[];
-extern char _fbss[];
-
 void put(char c)
 {
 	volatile char* lsr = (volatile char*)0xb2600018; // Line status register.
@@ -31,12 +28,7 @@ mrb_value myputs(mrb_state *mrb, mrb_value self){
  
 int main(void)
 {
-long *lptr;
 
-        /* bss clear */
-        for (lptr = (long *)_fbss; lptr < (long *)_end; ++lptr) {
-                 *lptr = 0;
-        }
         mrb_state *mrb;
         mrb = mrb_open();
         mrb_define_method(mrb, mrb->object_class,"myputs", myputs,
