@@ -2,6 +2,8 @@
 #include <mruby/string.h>
 #include <mruby/irep.h>
 
+#include "xprintf.h"
+
 #include "hoge.c"
 
 void put(char c)
@@ -13,28 +15,52 @@ void put(char c)
  
 	*thr = c;
 }
- 
-mrb_value myputs(mrb_state *mrb, mrb_value self){
-        char *ptr;
-        mrb_value val;
-        mrb_get_args(mrb, "S", &val);
-        for (ptr = RSTRING_PTR(val); *ptr != '\0'; ++ptr) {
-                put(*ptr);
-        }
-        put('\r');
-        put('\n');
-        return mrb_nil_value();
+
+void print(char *ptr)
+{
+	while(*ptr) {
+		put(*ptr);
+		++ptr;
+	}
 }
  
 int main(void)
 {
 
+	xfunc_out=put;
+
+	cfe_setup_exceptions();
+	cfe_irq_init();
+
+	/*Clear relevant SR bits*/
+	_exc_clear_sr_exl();
+	_exc_clear_sr_erl();
+
+	timer_init();
+
+	adm_irq_init();
+
         mrb_state *mrb;
         mrb = mrb_open();
-        mrb_define_method(mrb, mrb->object_class,"myputs", myputs,
-            MRB_ARGS_REQ(1));
         mrb_load_irep( mrb, bytecode);
         mrb_close(mrb);
 
+	return 0;
+}
+
+int sr;
+
+cli()
+{
+        sr = cfe_irq_disable();
+}
+
+sti()
+{
+        cfe_irq_enable(sr);
+}
+
+int getarch()
+{
 	return 0;
 }
