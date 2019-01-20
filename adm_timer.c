@@ -21,6 +21,7 @@ timer_init()
 int clk;
 
 	clk = adm_timer_init();
+	cfe_timer_init(clk);
 	xprintf("Clock : %d\n", clk);
 	interval = (clk / 2) / 100;
 
