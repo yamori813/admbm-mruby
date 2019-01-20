@@ -4,6 +4,8 @@
 
 #include "xprintf.h"
 
+#define	MODULE_ADM5120	7
+
 void put(char c)
 {
 	volatile char* lsr = (volatile char*)0xb2600018; // Line status register.
@@ -85,5 +87,5 @@ sti()
 
 int getarch()
 {
-	return 0;
+	return MODULE_ADM5120;
 }
