@@ -32,12 +32,17 @@ CROSS_CFLAGS += -DUSE_INQUEUE=1
 OBJS = start.o main.o syscalls.o xprintf.o adm_timer.o
 OBJS += adm_ether.o mt19937ar.o net.o bear.o adm_gpio.o
 
+RBSCRIPT = hoge.rb
+
 main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 	$(CROSS)-ld $(CROSS_LDFLAGS) -T main.ld -o main.elf $(OBJS) $(CROSS_LIBS)
 	$(CROSS)-objcopy -O binary main.elf main.bin
 	bzip2 -f main.bin
 	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby VM image' -d main.bin.bz2 main.bin.bz2.uboot
 
+image :
+	./mruby/build/host/bin/mrbc -ohoge.mrb $(RBSCRIPT)
+	cat main.bin.bz2.uboot hoge.mrb > main.img
 
 start.o : start.S
 	$(CROSS)-as -o start.o start.S

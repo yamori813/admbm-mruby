@@ -4,8 +4,6 @@
 
 #include "xprintf.h"
 
-#include "hoge.c"
-
 void put(char c)
 {
 	volatile char* lsr = (volatile char*)0xb2600018; // Line status register.
@@ -26,24 +24,49 @@ void print(char *ptr)
  
 int main(void)
 {
+unsigned char *sizep;
+int vmsize;
+unsigned char *mrbp;
+int mrbsize;
+unsigned char *mrbbuf;
+int bootsize;
+
+	bcmcore_cpuinit();
 
 	xfunc_out=put;
 
 	cfe_setup_exceptions();
 	cfe_irq_init();
 
-	/*Clear relevant SR bits*/
-	_exc_clear_sr_exl();
-	_exc_clear_sr_erl();
-
 	timer_init();
 
 	adm_irq_init();
 
-        mrb_state *mrb;
-        mrb = mrb_open();
-        mrb_load_irep( mrb, bytecode);
-        mrb_close(mrb);
+	bootsize = 0x40000;
+
+	sizep = 0xbfc00000 + bootsize + 0xc;
+	vmsize = *sizep << 24 | *(sizep + 1) << 16 |
+	    *(sizep + 2) << 8 | *(sizep + 3) + 64;
+	mrbp = 0xbfc00000 + bootsize + vmsize;
+	if (*(mrbp + 0) == 0x52 && *(mrbp + 1) == 0x49 &&
+	    *(mrbp + 2) == 0x54 && *(mrbp + 3) == 0x45) {
+		mrbsize = *(mrbp + 0xa) << 24 | *(mrbp + 0xb) << 16 |
+		    *(mrbp + 0xc) << 8 | *(mrbp + 0xd);
+		mrbbuf = malloc(mrbsize);
+		memcpy(mrbbuf, mrbp, mrbsize);
+
+		mrb_state *mrb;
+		mrb = mrb_open();
+		mrb_load_irep( mrb, mrbbuf);
+		if (mrb->exc) {
+			mrb_value exc = mrb_obj_value(mrb->exc);
+			mrb_value inspect = mrb_inspect(mrb, exc);
+			print(mrb_str_to_cstr(mrb, inspect));
+		}
+		mrb_close(mrb);
+	} else {
+		print("can't find mrb code on flash\n");
+	}
 
 	return 0;
 }
