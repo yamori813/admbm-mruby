@@ -32,7 +32,7 @@ unsigned long *lptr;
 
 	lptr = (unsigned long *)GPIO_CONF0;
 
-	*lptr = val << 16;
+	*lptr = (*lptr & 0x0f000000) | (val << 16);
 }
 
 unsigned long gpio_getdat()
@@ -50,5 +50,5 @@ unsigned long *lptr;
 
 	lptr = (unsigned long *)GPIO_CONF0;
 
-	*lptr = (*lptr & 0x0f0f00) | (val << 24);
+	*lptr = (*lptr & 0x000f0000) | (val << 24);
 }
