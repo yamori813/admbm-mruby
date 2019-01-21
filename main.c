@@ -6,6 +6,8 @@
 
 #define	MODULE_ADM5120	7
 
+extern char version[];
+
 void put(char c)
 {
 	volatile char* lsr = (volatile char*)0xb2600018; // Line status register.
@@ -36,6 +38,8 @@ int bootsize;
 	bcmcore_cpuinit();
 
 	xfunc_out=put;
+
+	print(version);
 
 	cfe_setup_exceptions();
 	cfe_irq_init();

@@ -51,6 +51,37 @@ err_t err;
 	}
 }
 
+int findenv(char *name, char *buf, char *res, int size)
+{
+char *ptr;
+int len;
+int i = 0;
+char key[128];
+
+	ptr = buf + 4;
+
+	while(1) {
+		for (i = 0; *(ptr + i) != '=' && i < sizeof(key) - 1; ++i)
+			key[i] = *(ptr + i);
+		key[i] = '\0';
+		ptr += i + 1;
+		if (strcmp(key, name) == 0) {
+			if (strlen(ptr) < size) {
+				strcpy(res, ptr);
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+		for (; *ptr != '\0'; ++ptr) ;
+		++ptr;
+		if (*ptr == '\0') {
+			res = '\0';
+			return 0;
+		}
+	}
+}
+
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
@@ -62,6 +93,8 @@ err_t
 ethernetif_init(struct netif *netif)
 {
 struct ethernetif *ethernetif;
+char *envp;
+char macstr[32];
 char *macptr;
 
 	ethernetif = mem_malloc(sizeof(struct ethernetif));
@@ -80,7 +113,13 @@ char *macptr;
 	netif->output = etharp_output;
 	netif->linkoutput = low_level_output;
 
-	macptr = "12:34:56:78:9a:bc";
+	envp = 0xbfc00000 + 0x30000;
+	if (findenv("ethaddr", envp, macstr, sizeof(macstr))) {
+		macptr = macstr;
+	} else {
+		macptr = "12:34:56:78:9a:bc";
+	}
+	xprintf("%s\n", macptr);
 
 	netif->hwaddr_len = ETHARP_HWADDR_LEN;
 	enet_parse_hwaddr(macptr,  netif->hwaddr);

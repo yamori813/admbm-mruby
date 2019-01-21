@@ -35,7 +35,9 @@ OBJS += adm_ether.o mt19937ar.o net.o bear.o adm_gpio.o
 RBSCRIPT = hoge.rb
 
 main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
-	$(CROSS)-ld $(CROSS_LDFLAGS) -T main.ld -o main.elf $(OBJS) $(CROSS_LIBS)
+	./ver.sh
+	$(CROSS)-cc $(CROSS_CFLAGS) -c ver.c
+	$(CROSS)-ld $(CROSS_LDFLAGS) -T main.ld -o main.elf $(OBJS) ver.o $(CROSS_LIBS)
 	$(CROSS)-objcopy -O binary main.elf main.bin
 	bzip2 -f main.bin
 	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby VM image' -d main.bin.bz2 main.bin.bz2.uboot
@@ -48,7 +50,6 @@ start.o : start.S
 	$(CROSS)-as -o start.o start.S
 
 main.o : main.c
-	../../bcm/bcmbm-mruby/mruby/build/host/bin/mrbc -Bbytecode hoge.rb
 	$(CROSS)-cc $(CROSS_CFLAGS) -o main.o -c main.c
 
 .c.o:
@@ -58,4 +59,4 @@ syscalls.o : syscalls.c
 	$(CROSS)-cc $(CROSS_CFLAGS) -o syscalls.o -c syscalls.c
 
 clean:
-	rm -rf main.elf *.o hoge.c *.uboot *.bz2
+	rm -rf main.elf *.o ver.c *.uboot *.bz2

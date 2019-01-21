@@ -1,64 +1,54 @@
 /*
- * Copyright (c) 2018 Hiroki Mori. All rights reserved.
+ * Copyright (c) 2019 Hiroki Mori. All rights reserved.
+ *
+ * Todo: LED GPIO support
  */
 
-#define	CHIPC_GPIOIN	0xb8000060
-#define	CHIPC_GPIOOUT	0xb8000064
-#define	CHIPC_GPIOOUTEN	0xb8000068
-#define	CHIPC_GPIOCTRL	0xb800006c
-#define	CHIPC_GPIOPOL	0xb8000070
-#define	CHIPC_GPIOINTM	0xb8000074
+#define	GPIO_CONF0	0xb20000b8
 
 unsigned long gpio_getctl()
 {
-unsigned long *lptr;
 
-	lptr = (unsigned long *)CHIPC_GPIOCTRL;
-
-	return *lptr;
+	return 0;
 }
 
 void gpio_setctl(unsigned long val)
 {
-unsigned long *lptr;
 
-	lptr = (unsigned long *)CHIPC_GPIOCTRL;
-
-	*lptr = val;
 }
 
 unsigned long gpio_getdir()
 {
 unsigned long *lptr;
 
-	lptr = (unsigned long *)CHIPC_GPIOOUTEN;
+	lptr = (unsigned long *)GPIO_CONF0;
 
-	return *lptr;
+	return (*lptr >> 16) & 0xf;
 }
 
 void gpio_setdir(unsigned long val)
 {
 unsigned long *lptr;
 
-	lptr = (unsigned long *)CHIPC_GPIOOUTEN;
+	lptr = (unsigned long *)GPIO_CONF0;
 
-	*lptr = val;
+	*lptr = val << 16;
 }
 
 unsigned long gpio_getdat()
 {
 unsigned long *lptr;
 
-	lptr = (unsigned long *)CHIPC_GPIOIN;
+	lptr = (unsigned long *)GPIO_CONF0;
 
-	return *lptr;
+	return (*lptr >> 8) & 0xf;
 }
 
 void gpio_setdat(unsigned long val)
 {
 unsigned long *lptr;
 
-	lptr = (unsigned long *)CHIPC_GPIOOUT;
+	lptr = (unsigned long *)GPIO_CONF0;
 
-	*lptr = val;
+	*lptr = (*lptr & 0x0f0f00) | (val << 24);
 }
