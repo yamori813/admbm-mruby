@@ -33,7 +33,7 @@ OBJS = start.o main.o syscalls.o xprintf.o adm_timer.o
 OBJS += adm_ether.o mt19937ar.o net.o bear.o adm_gpio.o
 OBJS += i2c.o
 
-RBSCRIPT = hoge.rb
+RBSCRIPT = samples/hello.rb
 
 main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 	./ver.sh
