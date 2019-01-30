@@ -4,8 +4,6 @@
 
 #include "xprintf.h"
 
-#define	MODULE_ADM5120	7
-
 extern char version[];
 
 void put(char c)
@@ -87,9 +85,4 @@ cli()
 sti()
 {
         cfe_irq_enable(sr);
-}
-
-int getarch()
-{
-	return MODULE_ADM5120;
 }
