@@ -52,32 +52,10 @@ extern void dcache_inv(unsigned long start, unsigned long size);
 
 #define ETH_INT_MASK    0x01fdefff
 
-#include "mii.h"
-
 /*
-   This is a driver for the Broadcom 4401 10/100 MAC with integrated
-   PHY as well as for the 10/100 MAC cores used in OCP-based SOCs.
-
-   This driver takes advantage of DMA coherence in systems that
-   support it (e.g., SB1250).  For systems without coherent DMA (e.g,
-   BCM47xx SOCs), packet buffer memory is explicitly flushed, and
-   descriptors are referenced only in uncacheable modes.
-
-   The ADM5120 does not have a big-endian mode for DMA.  On the
-   SB1250, this driver therefore uses "preserve byte lanes" addresses
-   for all DMA accesses that cross the ZBbus-PCI bridge.  Descriptors
-   and packets headers as seen by the CPU must be byte-swapped for the
-   DMA engine.  For hardware without such a mode, only little-endian
-   operation is supported.
+   This is ADM5120 Ethernet driver
 */
 
-#ifndef B44_DEBUG
-#define B44_DEBUG 0
-#endif
-
-#if ((ENDIAN_BIG + ENDIAN_LITTLE) != 1)
-#error "dev_sb_mac: system endian not set"
-#endif
 
 /* Set IPOLL to drive processing through the pseudo-interrupt
    dispatcher.  Set XPOLL to drive processing by an external polling
@@ -94,8 +72,6 @@ extern void dcache_inv(unsigned long start, unsigned long size);
 #define PAGE_ALIGN        4096
 #define ALIGN(n,align)    (((n)+((align)-1)) & ~((align)-1))
 
-#define MIN_ETHER_PACK  (ENET_MIN_PKT+ENET_CRC_SIZE)   /* size of min packet */
-#define MAX_ETHER_PACK  (ENET_MAX_PKT+ENET_CRC_SIZE)   /* size of max packet */
 
 /* Packet buffers.  For the ADM5120, an rx packet is preceded by
    status information written into the rx buffer.  The packet itself
@@ -215,17 +191,10 @@ admsw_softc *gsc;
 #endif
 
 
-/* Chip parameterization */
-
-#define GP_TIMER_HZ    62500000
-
-
 /* Driver parameterization */
 
 #define MAXRXDSCR	4
 #define MAXTXDSCR	4
-#define MINRXRING	4
-
 
 /* Prototypes */
 
@@ -251,16 +220,8 @@ static void admsw_probe(cfe_driver_t *drv,
    PIO accesses to the configuration and host interface registers use
    match bits.  */
 
-#if ENDIAN_BIG && defined(ADM5120)
-/* XXX This needs cleanup/abstraction.  The 47xx SOCs efectively have
-   an endian bit that is used to swap bytes in SDRAM accesses
-   (only). */
-static uint32_t phys_to_sb(uint32_t a) {return a + 0x10000000;}
-static uint32_t sb_to_phys(uint32_t a) {return a - 0x10000000;}
-#else
 static uint32_t phys_to_sb(uint32_t a) {return a;}
 static uint32_t sb_to_phys(uint32_t a) {return a;}
-#endif
 
 #undef PHYS_TO_PCI
 #undef PCI_TO_PHYS
@@ -268,37 +229,15 @@ static uint32_t sb_to_phys(uint32_t a) {return a;}
 #define PCI_TO_PTR(sc,a)  (PHYS_TO_PTR((*(sc)->dma_to_phys)(a)))
 #define PTR_TO_PCI(sc,x)  ((*(sc)->phys_to_dma)(PTR_TO_PHYS(x)))
 
-#if ENDIAN_BIG
-#define READCSR2(sc,csr) (phys_read16((sc)->membase + ((csr)^2)))
-#define WRITECSR2(sc,csr,val) (phys_write16((sc)->membase + ((csr)^2), (val)))
-#else
 #define READCSR2(sc,csr) (phys_read16((sc)->membase + (csr)))
 #define WRITECSR2(sc,csr,val) (phys_write16((sc)->membase + (csr), (val)))
-#endif
 #define READCSR(sc,csr) (phys_read32((sc)->membase + (csr)))
 #define WRITECSR(sc,csr,val) (phys_write32((sc)->membase + (csr), (val)))
 
 /* Byte swap utilities: host to/from little-endian */
 
-#if ENDIAN_BIG
-#define HTOL4(x) \
-    ((((x) & 0x00FF) << 24) | \
-     (((x) & 0xFF00) << 8)  | \
-     (((x) >> 8) & 0xFF00)  | \
-     (((x) >> 24) & 0x00FF))
-
-static uint32_t
-htol4(uint32_t x)
-{
-    uint32_t t;
-
-    t = ((x & 0xFF00FF00) >> 8) | ((x & 0x00FF00FF) << 8);
-    return (t >> 16) | ((t & 0xFFFF) << 16);
-}
-#else
 #define HTOL4(x) (x)
 #define htol4(x) (x)
-#endif
 
 #define ltoh4 htol4   /* self-inverse */
 
@@ -506,249 +445,6 @@ admsw_init(admsw_softc *sc)
 
 /* MII access */
 
-static void
-mii_enable(admsw_softc *sc)
-{
-    uint32_t devctl, enetctl;
-
-    devctl = READCSR(sc, R_DEV_CONTROL);
-    if ((devctl & M_DVCTL_IP) != 0) {
-	WRITECSR(sc, R_MII_STATUS_CONTROL, M_MIICTL_PR | V_MIICTL_MD(0xD));
-	devctl = READCSR(sc, R_DEV_CONTROL);
-	if ((devctl & M_DVCTL_ER) != 0) {
-	    devctl &= ~M_DVCTL_ER;
-	    WRITECSR(sc, R_DEV_CONTROL, devctl);
-	    cfe_usleep(100);
-	    }
-	}
-    else {
-	WRITECSR(sc, R_MII_STATUS_CONTROL, M_MIICTL_PR | V_MIICTL_MD(0x9));
-	enetctl = READCSR(sc, R_ENET_CONTROL);
-	enetctl |= M_ECTL_EP;
-	WRITECSR(sc, R_ENET_CONTROL, enetctl);
-	}
-}
-
-static uint16_t
-mii_read(admsw_softc *sc, int reg)
-{
-    uint32_t cmd, status;
-    uint32_t data;
-    int timeout;
-
-    WRITECSR(sc, R_ENET_INT_STATUS, M_EINT_MI);
-    (void)READCSR(sc, R_ENET_INT_STATUS);
-
-    cmd = (V_MIIDATA_OP(K_MII_OP_READ) | V_MIIDATA_TA(K_TA_VALID) |
-           V_MIIDATA_RA(reg) | V_MIIDATA_PM(sc->phy_addr));
-    WRITECSR(sc, R_MII_DATA, cmd | V_MIIDATA_SB(K_MII_START));
-
-    for (timeout = 1000; timeout > 0; timeout -= 100) {
-	status = READCSR(sc, R_ENET_INT_STATUS);
-	if ((status & M_EINT_MI) != 0)
-	    break;
-	cfe_usleep(100);
-	}
-
-    if (timeout <= 0)
-	return 0xFFFF;
-
-    data = G_MIIDATA_D(READCSR(sc, R_MII_DATA));
-    return data;
-}
-
-static void
-mii_write(admsw_softc *sc, int reg, uint16_t value)
-{
-    uint32_t cmd, status;
-    int timeout;
-
-    WRITECSR(sc, R_ENET_INT_STATUS, M_EINT_MI);
-    (void)READCSR(sc, R_ENET_INT_STATUS);
-
-    cmd = (V_MIIDATA_OP(K_MII_OP_WRITE) | V_MIIDATA_TA(0x2) |
-           V_MIIDATA_RA(reg) | V_MIIDATA_PM(sc->phy_addr) |
-	   V_MIIDATA_D(value));
-    WRITECSR(sc, R_MII_DATA, cmd | V_MIIDATA_SB(K_MII_START));
-
-    for (timeout = 1000; timeout > 0; timeout -= 100) {
-	status = READCSR(sc, R_ENET_INT_STATUS);
-	if ((status & M_EINT_MI) != 0)
-	    break;
-	cfe_usleep(100);
-	}
-}
-
-/* For an integrated PHY (admsw), unimplemented PHY addresses return
-   id's of 0.  For (some?) external PHYs, unimplmented addresses
-   appear to return 0x1FFF or 0x3FFF for id1 but reliably (?) return
-   0xFFFF for id2.  */
-static int
-mii_probe(admsw_softc *sc)
-{
-    int i;
-    uint16_t id1, id2;
-    int prev = sc->phy_addr;
-
-    for (i = 0; i < 32; i++) {
-        sc->phy_addr = i;
-        id1 = mii_read(sc, R_PHYIDR1);
-	id2 = mii_read(sc, R_PHYIDR2);
-	if (id2 != 0x0000 && id2 != 0xFFFF) {
-	    sc->phy_vendor = ((uint32_t)id1 << 6) | ((id2 >> 10) & 0x3F);
-	    sc->phy_device = (id2 >> 4) & 0x3F;
-	    xprintf("phy %d, vendor %06x part %02x\n",
-		    i, sc->phy_vendor, sc->phy_device);
-	    
-#if 0
-	    return 0;
-#endif
-	    }
-	}
-#if 0
-    xprintf("mii_probe: No PHY found\n");
-#else
-    xprintf("mii_probe: Using PHY %d\n", prev);
-#endif
-    sc->phy_addr = prev;   /* Expected addr (if any) */
-    return -1;
-}
-
-#if B44_DEBUG
-static void
-mii_dump(admsw_softc *sc, const char *label)
-{
-    int i;
-    uint16_t  r;
-    uint32_t  idr, part;
-
-    xprintf("%s, MII:\n", label);
-    idr = part = 0;
-
-    /* Common registers */
-    for (i = 0x0; i <= 0x8; ++i) {
-	r = mii_read(sc, i);
-	xprintf(" REG%02X: %04X", i, r);
-	if (i % 4 == 3) xprintf("\n");
-	if (i == MII_PHYIDR1) {
-	    idr |= r << 6;
-	    }
-	else if (i == MII_PHYIDR2) {
-	    idr |= (r >> 10) & 0x3F;
-	    part = (r >> 4) & 0x3F;
-	    }
-	}
-    xprintf("\nIDR %06x, PART %02x\n", idr, part);
-    
-    /* Broadcom extensions */
-    for (i = 0x10; i <= 0x14; ++i) {
-	r = mii_read(sc, i);
-	xprintf(" REG%02X: %04X", i, r);
-	if (i % 4 == 3) xprintf("\n");
-	}
-    xprintf("\n");
-
-    /* Broadcom extensions (52xx family) */
-    for (i = 0x18; i <= 0x1F; i++) {
-	r = mii_read(sc, i);
-	xprintf(" REG%02X: %04X", i, r);
-	if (i % 4 == 3) xprintf("\n");
-	}
-    xprintf("\n");
-}
-#else
-#define mii_dump(sc,label)
-#endif
-
-static void
-mii_set_speed(admsw_softc *sc, int speed)
-{
-    /* NYI */
-}
-
-static uint16_t
-mii_interrupt(admsw_softc *sc)
-{
-    /* The read also clears any interrupt bits. */
-    return mii_read(sc, R_INTERRUPT);
-}
-
-#define ROBOSW_ACCESS_CONTROL_REG	0x10
-#define ROBOSW_RW_CONTROL_REG		0x11
-#define ROBOSW_DATA_REG_BASE		0x18
-
-#define ACCESS_CONTROL_RW		0x0001
-#define RW_CONTROL_WRITE		0x0001
-#define RW_CONTROL_READ			0x0002
-
-static void
-mii_autonegotiate(admsw_softc *sc)
-{
-    uint16_t  control, status, remote;
-    unsigned int  timeout;
-    int linkspeed;
-
-    linkspeed = ETHER_SPEED_UNKNOWN;
-
-    xprintf("%s: Link speed: ", admsw_devname(sc));
-
-    if (sc->phy_addr == 0x1E) {
-	/* XXX for SOC parts, this address may indicate a Roboswitch. */
-	xprintf("100BaseT FDX (switch)\n");
-	linkspeed = ETHER_SPEED_100FDX;	 
-    }
-    else {
-	/* Read twice to clear latching bits */
-	status = mii_read(sc, MII_BMSR);
-	status = mii_read(sc, MII_BMSR);
-
-	if ((status & (BMSR_AUTONEG | BMSR_LINKSTAT)) ==
-	    (BMSR_AUTONEG | BMSR_LINKSTAT))
-	    control = mii_read(sc, MII_BMCR);
-	else {
-	    for (timeout = 4*CFE_HZ; timeout > 0; timeout -= CFE_HZ/2) {
-		status = mii_read(sc, MII_BMSR);
-		if ((status & BMSR_ANCOMPLETE) != 0)
-		    break;
-		cfe_sleep(CFE_HZ/2);
-		}
-	    }
-
-	remote = mii_read(sc, MII_ANLPAR);
-	if ((status & BMSR_ANCOMPLETE) != 0) {
-	    /* A link partner was negotiated... */
-
-	    if ((remote & ANLPAR_TXFD) != 0) {
-		xprintf("100BaseT FDX\n");
-		linkspeed = ETHER_SPEED_100FDX;	 
-		}
-	    else if ((remote & ANLPAR_TXHD) != 0) {
-		xprintf("100BaseT HDX\n");
-		linkspeed = ETHER_SPEED_100HDX;	 
-		}
-	    else if ((remote & ANLPAR_10FD) != 0) {
-		xprintf("10BaseT FDX\n");
-		linkspeed = ETHER_SPEED_10FDX;	 
-		}
-	    else if ((remote & ANLPAR_10HD) != 0) {
-		xprintf("10BaseT HDX\n");
-		linkspeed = ETHER_SPEED_10HDX;	 
-		}
-	    }
-	else {
-	    /* no link partner convergence */
-	    xprintf("Unknown\n");
-	    linkspeed = ETHER_SPEED_UNKNOWN;
-	    }
-	sc->linkspeed = linkspeed;
-
-	/* clear latching bits */
-	status = mii_read(sc, MII_BMSR);
-	}
-
-    mii_dump(sc, "final PHY");
-}
-
 
 static int
 admsw_reset(admsw_softc *sc)
@@ -825,8 +521,7 @@ admsw_hwinit(admsw_softc *sc)
 static void
 admsw_setspeed(admsw_softc *sc, int speed)
 {
-    /* XXX Not yet implemented - autonegotiation only. */
-    (void)mii_set_speed;
+    /* XXX Not yet implemented. */
 }
 
 static void
@@ -845,52 +540,10 @@ admsw_isr(void *arg)
 #if IPOLL
     sc->interrupts++;
 #endif
+
     admsw_procrxring(sc);
+
     WRITECSR(sc, SCR_INT_ST, READCSR(sc, SCR_INT_ST));
-#if 0
-
-    for (;;) {
-
-	/* Read and clear the interrupt status. */
-	status = READCSR(sc, R_INT_STATUS);
-	status &= sc->intmask;
-	if (status == 0)
-	    break;
-
-	WRITECSR(sc, R_INT_STATUS, status);  /* write-to-clear */
-
-	/* XXX Handle SERR, etc. */
-
-	if (status & M_INT_RI) {
-#if IPOLL
-	    sc->rx_interrupts++;
-#endif
-	    admsw_procrxring(sc);
-	    }
-
-	if (status & M_INT_XI) {
-#if IPOLL
-	    sc->tx_interrupts++;
-#endif
-	    admsw_proctxring(sc);
-	    }
-
-	if (status & M_INT_TO) {
-	    sc->slow_poll = 1;
-	    }
-
-	if (status & (M_INT_XU | M_INT_RO)) {
-	    if (status & M_INT_XU) {
-		xprintf("ADM5120: tx underrun, %08x\n", status);
-		/* XXX Try to restart */
-		}
-	    if (status & M_INT_RO) {
-		xprintf("ADM5120: rx overrun, %08x\n", status);
-		/* XXX Try to restart */
-		}
-	    }
-	}
-#endif
 }
 
 

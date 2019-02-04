@@ -3,19 +3,14 @@
 #include "sbmips32.h"
 #include "cfe_irq.h"
 
-static void
-hw0_isr(void *arg)
-{
-print("@");
-
-}
-
 void adm_irq_enable(int adm_irql)
 {
-    uint32_t sr;
+    uint32_t sr, reg;
 
     sr = cfe_irq_disable();
-    *(volatile uint32_t *)PHYS_TO_K1(INTC_BASE + IRQ_ENABLE_REG) = (1 << adm_irql);
+    reg = *(volatile uint32_t *)PHYS_TO_K1(INTC_BASE + IRQ_ENABLE_REG);
+    *(volatile uint32_t *)PHYS_TO_K1(INTC_BASE + IRQ_ENABLE_REG) =
+	reg | (1 << adm_irql);
     cfe_irq_enable(sr);
 }
 
@@ -24,15 +19,13 @@ void adm_irq_disable(int adm_irql)
     uint32_t sr;
 
     sr = cfe_irq_disable();
-    *(volatile uint32_t *)PHYS_TO_K1(INTC_BASE + IRQ_DISABLE_REG) = (1 << adm_irql);
+    *(volatile uint32_t *)PHYS_TO_K1(INTC_BASE + IRQ_DISABLE_REG) =
+	1 << adm_irql;
     cfe_irq_enable(sr);
 }
 
 int adm_irq_init()
 {
-
-//    cfe_request_irq(0, hw0_isr, 0, CFE_IRQ_FLAGS_SHARED, 0);
-//    adm_irq_enable(INT_LVL_TIMER);
 
     return 0;
 }
