@@ -1,5 +1,5 @@
 #
-# yabmbm-mruby mruby script
+# BBR-4MG switch port check script
 #
 
 begin
