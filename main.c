@@ -50,7 +50,8 @@ int bootsize;
 
 	sizep = 0xbfc00000 + bootsize + 0xc;
 	vmsize = *sizep << 24 | *(sizep + 1) << 16 |
-	    *(sizep + 2) << 8 | *(sizep + 3) + 64;
+	    *(sizep + 2) << 8 | *(sizep + 3);
+	vmsize += 64;
 	mrbp = 0xbfc00000 + bootsize + vmsize;
 	if (*(mrbp + 0) == 0x52 && *(mrbp + 1) == 0x49 &&
 	    *(mrbp + 2) == 0x54 && *(mrbp + 3) == 0x45) {
