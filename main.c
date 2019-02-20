@@ -24,6 +24,13 @@ void print(char *ptr)
 	}
 }
  
+
+void mt19937ar_init()
+{
+	unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
+	init_by_array(init, length);
+}
+
 int main(void)
 {
 unsigned char *sizep;
@@ -38,6 +45,8 @@ int bootsize;
 	xfunc_out=put;
 
 	print(version);
+
+	mt19937ar_init();
 
 	cfe_setup_exceptions();
 	cfe_irq_init();
