@@ -1,5 +1,7 @@
 #include "cfe/cfe_irq.h"
 
+#include "time.h"
+
 unsigned int alarm;
 
 unsigned int interval;
@@ -46,8 +48,8 @@ delay_ms(int ms)
 	cfe_usleep(ms * 1000);
 }
 
-unsigned long
-time(unsigned long *t)
+time_t
+time(time_t *t)
 {
 	return sys_now()/1000 + starttime;
 }
