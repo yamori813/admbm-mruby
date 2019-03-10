@@ -2,6 +2,8 @@
 
 #include "time.h"
 
+#define Watchdog0	0xb20000c0
+
 unsigned int alarm;
 
 unsigned int interval;
@@ -31,6 +33,36 @@ int clk;
 	cfe_enable_irq(5);
 	alarm = _getticks() + interval;
 	_setalarm(alarm);
+}
+
+void watchdog_start(int sec)
+{
+unsigned long *lptr;
+
+	lptr = (unsigned long *)Watchdog0;
+
+	*lptr = (1 << 31) | ((sec * 100) << 16);
+}
+
+void watchdog_reset()
+{
+unsigned long *lptr;
+unsigned long reg;
+
+	lptr = (unsigned long *)Watchdog0;
+
+	reg = *lptr;
+
+	*lptr = reg & 0xffff0000;
+}
+
+void watchdog_stop()
+{
+unsigned long *lptr;
+
+	lptr = (unsigned long *)Watchdog0;
+
+	*lptr = 0;
 }
 
 int sys_now()
