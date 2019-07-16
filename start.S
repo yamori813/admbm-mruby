@@ -10,6 +10,8 @@
 start:
 	li      $sp, 0x80800000
 	nop
+#	li	$10, 2
+#	mtc0	$10, $16
 # bss clear
 	la	$8,_fbss
 	la	$9,_end

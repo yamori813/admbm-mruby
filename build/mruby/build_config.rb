@@ -97,6 +97,7 @@ MRuby::CrossBuild.new('admtek') do |conf|
 # for debug
 #  conf.cc.flags << "-O0 -g3 -fno-pic -mno-abicalls"
   conf.cc.flags << "-pipe -mlong-calls"
+  conf.cc.flags << "-march=4kc"
   conf.cc.include_paths = ["#{root}/include", "../../../bcm/bcmbm-mruby/newlib-3.0.0.20180831/newlib/libc/include"]
 
   conf.gem :github => 'yamori813/mruby-yabm'

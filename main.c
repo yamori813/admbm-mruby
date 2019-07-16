@@ -23,6 +23,17 @@ void print(char *ptr)
 		++ptr;
 	}
 }
+
+#ifdef CAHCHE_TEST
+void cache_test()
+{
+	*(volatile unsigned int *)0x80700000 = 0x1234;
+	xprintf("MORIMORI %x\n", *(volatile unsigned int *) 0x80700000);
+	*(volatile unsigned int *)0xa0700000 = 0xbeef;
+//	dcache_wback_inv(0x80700000, 32);
+//	flush_cache(0x80700000, 32);
+}
+#endif
  
 int main(void)
 {
@@ -38,6 +49,11 @@ int bootsize;
 	xfunc_out=put;
 
 	print(version);
+
+#ifdef CAHCHE_TEST
+	cache_test();
+	xprintf("MORIMORI %x\n", *(volatile unsigned int *) 0x80700000);
+#endif
 
 	mt19937ar_init();
 
