@@ -7,7 +7,7 @@
 WRITEKEY = "naisyo"
 CHANNELID = "naisyo"
 
-INTERVAL = 10
+INTERVAL = 30
 
 def delay(yabm, val) 
   start = yabm.count() 
