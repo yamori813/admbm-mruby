@@ -33,6 +33,7 @@ CROSS_CFLAGS += -DUSE_INQUEUE=1 -march=4kc
 OBJS = start.o main.o syscalls.o xprintf.o adm_timer.o
 OBJS += adm_ether.o mt19937ar.o net.o bear.o adm_gpio.o
 OBJS += adm_switch.o
+OBJS += i2c.o
 
 RBSCRIPT = samples/hello.rb
 
