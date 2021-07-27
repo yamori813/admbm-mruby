@@ -43,6 +43,8 @@ unsigned char *mrbp;
 int mrbsize;
 unsigned char *mrbbuf;
 int bootsize;
+unsigned char hash[32];
+int i;
 
 	bcmcore_cpuinit();
 
@@ -73,10 +75,13 @@ int bootsize;
 	mrbp = 0xbfc00000 + bootsize + vmsize;
 	if (*(mrbp + 0) == 0x52 && *(mrbp + 1) == 0x49 &&
 	    *(mrbp + 2) == 0x54 && *(mrbp + 3) == 0x45) {
-		mrbsize = *(mrbp + 0xa) << 24 | *(mrbp + 0xb) << 16 |
-		    *(mrbp + 0xc) << 8 | *(mrbp + 0xd);
+		mrbsize = *(mrbp + 0x8) << 24 | *(mrbp + 0x9) << 16 |
+		    *(mrbp + 0xa) << 8 | *(mrbp + 0xb);
+		xprintf("MRB SIZE %d\n", mrbsize);
 		mrbbuf = malloc(mrbsize);
 		memcpy(mrbbuf, mrbp, mrbsize);
+		mksha256(mrbbuf, mrbsize, hash);
+		xprintf("MRB SHA256 ");
 
 		mrb_state *mrb;
 		mrb = mrb_open();
