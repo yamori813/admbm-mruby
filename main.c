@@ -82,6 +82,9 @@ int i;
 		memcpy(mrbbuf, mrbp, mrbsize);
 		mksha256(mrbbuf, mrbsize, hash);
 		xprintf("MRB SHA256 ");
+		for (i = 0; i < 32; ++i)
+			xprintf("%02x", hash[i]);
+		xprintf("\n");
 
 		mrb_state *mrb;
 		mrb = mrb_open();

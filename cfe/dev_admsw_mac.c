@@ -680,11 +680,12 @@ int i;
     /* CPU port to be disabled, CRC padding, disable unknown packets */
     WRITECSR(sc, SCR_CPUP_CONF, 0x01 |
 	0x02 |  /* CRC padding */
-	((sc->port_enable & 0x3f) << 9)); /* disable unknown packets */
+	((sc->port_enable & 0x3f) << SW_DIS_UN_SHIFT)); /* disable unknown packets */
     WRITECSR(sc, SCR_PORT_CONF0,
 	(~sc->port_enable & 0x3f) |
-	((sc->port_enable & 0x3f) << 16) |
-	((sc->port_enable & 0x3f) << 8));
+	((sc->port_enable & 0x3f) << SW_EN_BP_SHIFT) |
+//	((sc->port_enable & 0x3f) << SW_EN_MC_SHIFT));
+	(0x3f << SW_EN_MC_SHIFT)); /* for ipv6 */
 
     WRITECSR(sc, SCR_PORT_CONF1, (sc->port_enable & 0x3f) << 20);
 
