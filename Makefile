@@ -41,7 +41,7 @@ main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 	$(CROSS)-ld $(CROSS_LDFLAGS) -T main.ld -o main.elf $(OBJS) ver.o $(CROSS_LIBS)
 	$(CROSS)-objcopy -O binary main.elf main.bin
 	bzip2 -f main.bin
-	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby VM image' -d main.bin.bz2 main.bin.bz2.uboot
+	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby on YABM' -d main.bin.bz2 main.bin.bz2.uboot
 
 image :
 	./mruby/build/host/mrbc/bin/mrbc -ohoge.mrb $(RBSCRIPT)
