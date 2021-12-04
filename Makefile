@@ -7,6 +7,7 @@ LWIPDIR=build/work/lwip-2.1.2
 BARESSLDIR=build/work/bearssl-0.6
 
 CROSS=mips
+CROSSBU=mips-unknown-freebsd13.0
 
 CROSS_LDFLAGS = -static -EL
 CROSS_LIBS = -L./$(NEWLIBDIR)/mips/el/newlib/
@@ -38,8 +39,8 @@ RBSCRIPT = samples/hello.rb
 main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 	./ver.sh
 	$(CROSS)-gcc $(CROSS_CFLAGS) -c ver.c
-	$(CROSS)-ld $(CROSS_LDFLAGS) -T main.ld -o main.elf $(OBJS) ver.o $(CROSS_LIBS)
-	$(CROSS)-objcopy -O binary main.elf main.bin
+	$(CROSSBU)-ld $(CROSS_LDFLAGS) -T main.ld -o main.elf $(OBJS) ver.o $(CROSS_LIBS)
+	$(CROSSBU)-objcopy -O binary main.elf main.bin
 	bzip2 -f main.bin
 	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby on YABM' -d main.bin.bz2 main.bin.bz2.uboot
 
@@ -48,7 +49,7 @@ image :
 	cat main.bin.bz2.uboot hoge.mrb > main.img
 
 start.o : start.S
-	$(CROSS)-as -EL -march=4kc -o start.o start.S
+	$(CROSSBU)-as -EL -march=4kc -o start.o start.S
 
 main.o : main.c
 	$(CROSS)-gcc $(CROSS_CFLAGS) -o main.o -c main.c
