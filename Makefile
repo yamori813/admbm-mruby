@@ -27,7 +27,7 @@ CROSS_CFLAGS += -EL -G 0
 CROSS_CFLAGS += -fno-pic -mno-abicalls
 CROSS_CFLAGS += -fno-strict-aliasing -fno-common -fomit-frame-pointer -G 0
 CROSS_CFLAGS += -pipe -mlong-calls
-CROSS_CFLAGS += -DUSE_INQUEUE=1 -march=4kc
+CROSS_CFLAGS += -march=4kc
 
 OBJS = start.o main.o syscalls.o xprintf.o adm_timer.o
 OBJS += adm_ether.o mt19937ar.o net.o bear.o adm_gpio.o
