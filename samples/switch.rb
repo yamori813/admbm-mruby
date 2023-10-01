@@ -15,7 +15,7 @@ yabm = YABM.new
 
 yabm.netstart(addr, mask, gw, dns)
 
-while 1 do
+loop do
   yabm.print "===\r\n"
 
   dat = yabm.getphyst
@@ -47,9 +47,7 @@ while 1 do
       yabm.print "\r\n"
     end
   end
-  start = yabm.count() 
-  while yabm.count() < start + 10000 do
-  end
+  yabm.msleep 10_000
 end
 
 rescue => e

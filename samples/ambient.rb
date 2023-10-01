@@ -9,12 +9,6 @@ CHANNELID = "naisyo"
 
 INTERVAL = 30
 
-def delay(yabm, val) 
-  start = yabm.count() 
-  while yabm.count() < start + val do
-  end
-end
-
 begin
 
 yabm = YABM.new
@@ -31,9 +25,9 @@ yabm.print yabm.getaddress + "\n"
 
 count = 0
 
-while 1 do
+loop do
   yabm.print "."
-  count = count + 1
+  count += 1
   yabm.print " " + count.to_s
 
   body='{ "writeKey":"' + WRITEKEY + '", "d1":' + count.to_s + '}'
@@ -50,7 +44,7 @@ while 1 do
   end
   yabm.gpiosetdat(1 << 3)
   yabm.print "\n"
-  delay(yabm, INTERVAL * 1000)
+  yabm.msleep(INTERVAL * 1000)
 end
 
 rescue => e

@@ -16,9 +16,9 @@ while 1 do
    end
    yabm.gpiosetled(j, ledout[i])
    yabm.print j.to_s + ":" + ledout[i].to_s + "\n"
-   i = i + 1
+   i += 1
    if i == 4
-     j = j + 1
+     j += 1
      if j == 5
        j = 0
      end
