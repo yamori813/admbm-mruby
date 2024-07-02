@@ -45,7 +45,7 @@ main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby on YABM' -d main.bin.bz2 main.bin.bz2.uboot
 
 image :
-	./mruby/build/host/mrbc/bin/mrbc -ohoge.mrb $(RBSCRIPT)
+	./mruby/build/host/bin/mrbc -ohoge.mrb $(RBSCRIPT)
 	cat main.bin.bz2.uboot hoge.mrb > main.img
 
 start.o : start.S
