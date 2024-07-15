@@ -5,7 +5,6 @@ MRuby::CrossBuild.new('admtek') do |conf|
 #  conf.archiver.command = 'mips-ar'
   conf.archiver.command = 'mips-unknown-freebsd13.0-ar'
 
-  cc.defines << %w(MRB_METHOD_T_STRUCT)
   cc.defines << %w(MRB_NO_STDIO)
   cc.defines << %w(MRB_NO_FLOAT)
   cc.defines << %w(YABM_ADMTEK)
