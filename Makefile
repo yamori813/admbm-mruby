@@ -46,6 +46,7 @@ main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 
 image :
 	./mruby/build/host/bin/mrbc -ohoge.mrb $(RBSCRIPT)
+	@sha256 hoge.mrb
 	cat main.bin.bz2.uboot hoge.mrb > main.img
 
 start.o : start.S
