@@ -11,7 +11,7 @@ gcc 4.9.2
 
 Also use mkimage command.  
 
-I build on FreeBSD/amd64 11.2 used by linux emuration.  
+I build on FreeBSD/amd64 13.1 used by ports gcc and binutil.
 
 Work on ADM5120 and ADM5120P
 
@@ -28,10 +28,6 @@ Custom script build is this.
 Todo  
 
 2038 problem  
-real memory size  
 UART support  
 Switch support  
-I2C support  
-USB Support  
-IPv6 support  
 etc.  
