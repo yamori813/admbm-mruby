@@ -11,19 +11,36 @@ gcc 4.9.2
 
 Also use mkimage command.  
 
-I build on FreeBSD/amd64 13.1 used by ports gcc and binutil.
+I build on FreeBSD/amd64 13.1 used by ports gcc and binutil. 
 
 Work on ADM5120 and ADM5120P
 
+Build VM. 
+
+```
+% make
+```
+
 Build u-boot image.  
 
-% make image  
+```
+% make image
+```
 
-Defalte script is samples/hello.rb  
+Defalte script is samples/hello.rb.  
 
 Custom script build is this.  
 
-% make image RBSCRIPT=myscript.rb  
+```
+% make image RBSCRIPT=myscript.rb
+```
+
+Multi script file comple is this. 
+
+```
+% make image RBSCRIPT="sub.rb main.rb"
+```
+
 
 Todo  
 
