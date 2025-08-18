@@ -30,7 +30,7 @@ CROSS_CFLAGS += -pipe -mlong-calls
 CROSS_CFLAGS += -march=4kc
 
 OBJS = start.o main.o syscalls.o xprintf.o adm_timer.o
-OBJS += adm_ether.o mt19937ar.o net.o bear.o adm_gpio.o adm_uart.o
+OBJS += adm_ether.o mt19937ar.o net.o bear.o httpsvr.o adm_gpio.o adm_uart.o
 OBJS += adm_switch.o
 OBJS += i2c.o
 
