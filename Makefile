@@ -5,6 +5,7 @@
 NEWLIBDIR=build/work/newlib-3.0.0.20180831
 LWIPDIR=build/work/lwip-2.1.2
 BARESSLDIR=build/work/bearssl-0.6
+MRUBYDIR=build/work/mruby
 
 CROSS=mips
 CROSSBU=mips-unknown-freebsd13.0
@@ -12,14 +13,14 @@ CROSSBU=mips-unknown-freebsd13.0
 CROSS_LDFLAGS = -static -EL
 CROSS_LIBS = -L./$(NEWLIBDIR)/mips/el/newlib/
 CROSS_LIBS += -L/usr/local/lib/gcc/mips/4.9.2/el/
-CROSS_LIBS += -Lmruby/build/admtek/lib/
+CROSS_LIBS += -L$(MRUBYDIR)/build/admtek/lib/
 CROSS_LIBS += -L$(LWIPDIR)/mips4kel/
 CROSS_LIBS += -L./$(BARESSLDIR)/build/
 CROSS_LIBS += -Lcfe/
 CROSS_LIBS += -lmruby -llwip -lbearssl -lcfe -lc -lgcc
 
 CROSS_CFLAGS = -I./$(NEWLIBDIR)/newlib/libc/include/
-CROSS_CFLAGS += -Imruby/include
+CROSS_CFLAGS += -I./$(MRUBYDIR)/include
 CROSS_CFLAGS += -I./$(LWIPDIR)/src/include -I./$(LWIPDIR)/mips4kel/include
 CROSS_CFLAGS += -I$(BARESSLDIR)/inc
 CROSS_CFLAGS += -EL -G 0
@@ -45,7 +46,7 @@ main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby on YABM' -d main.bin.bz2 main.bin.bz2.uboot
 
 image :
-	./mruby/build/host/bin/mrbc -ohoge.mrb $(RBSCRIPT)
+	./build/work/mruby/build/host/bin/mrbc -ohoge.mrb $(RBSCRIPT)
 	@sha256 hoge.mrb
 	cat main.bin.bz2.uboot hoge.mrb > main.img
 
