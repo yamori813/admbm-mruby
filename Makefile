@@ -2,27 +2,27 @@
 # 
 #
 
-NEWLIBDIR=build/work/newlib-3.0.0.20180831
-LWIPDIR=build/work/lwip-2.1.2
-BARESSLDIR=build/work/bearssl-0.6
-MRUBYDIR=build/work/mruby
+NEWLIBDIR=newlib-3.0.0.20180831
+LWIPDIR=lwip-2.1.2
+BARESSLDIR=bearssl-0.6
+MRUBYDIR=mruby
 
 CROSS=mips
 CROSSBU=mips-unknown-freebsd13.0
 
 CROSS_LDFLAGS = -static -EL
-CROSS_LIBS = -L./$(NEWLIBDIR)/mips/el/newlib/
+CROSS_LIBS = -Lbuild/work/$(NEWLIBDIR)/mips/el/newlib/
 CROSS_LIBS += -L/usr/local/lib/gcc/mips/4.9.2/el/
-CROSS_LIBS += -L$(MRUBYDIR)/build/admtek/lib/
-CROSS_LIBS += -L$(LWIPDIR)/mips4kel/
-CROSS_LIBS += -L./$(BARESSLDIR)/build/
+CROSS_LIBS += -Lbuild/work/$(MRUBYDIR)/build/admtek/lib/
+CROSS_LIBS += -Lbuild/work/$(LWIPDIR)/mips4kel/
+CROSS_LIBS += -Lbuild/work/$(BARESSLDIR)/build/
 CROSS_LIBS += -Lcfe/
 CROSS_LIBS += -lmruby -llwip -lbearssl -lcfe -lc -lgcc
 
-CROSS_CFLAGS = -I./$(NEWLIBDIR)/newlib/libc/include/
-CROSS_CFLAGS += -I./$(MRUBYDIR)/include
-CROSS_CFLAGS += -I./$(LWIPDIR)/src/include -I./$(LWIPDIR)/mips4kel/include
-CROSS_CFLAGS += -I$(BARESSLDIR)/inc
+CROSS_CFLAGS = -Ibuild/work/$(NEWLIBDIR)/newlib/libc/include/
+CROSS_CFLAGS += -Ibuild/work/$(MRUBYDIR)/include
+CROSS_CFLAGS += -Ibuild/work/$(LWIPDIR)/src/include -Ibuild/work/$(LWIPDIR)/mips4kel/include
+CROSS_CFLAGS += -Ibuild/work/$(BARESSLDIR)/inc
 CROSS_CFLAGS += -EL -G 0
 #CROSS_CFLAGS += -Os -g -fno-pic -mno-abicalls
 CROSS_CFLAGS += -fno-pic -mno-abicalls
