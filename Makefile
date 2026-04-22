@@ -20,7 +20,7 @@ CROSS_LIBS += -Lcfe/
 CROSS_LIBS += -lmruby -llwip -lbearssl -lcfe -lc -lgcc
 
 CROSS_CFLAGS = -Ibuild/work/$(NEWLIBDIR)/newlib/libc/include/
-CROSS_CFLAGS += -Ibuild/work/$(MRUBYDIR)/include
+CROSS_CFLAGS += -Ibuild/work/$(MRUBYDIR)/build/admtek/include
 CROSS_CFLAGS += -Ibuild/work/$(LWIPDIR)/src/include -Ibuild/work/$(LWIPDIR)/mips4kel/include
 CROSS_CFLAGS += -Ibuild/work/$(BARESSLDIR)/inc
 CROSS_CFLAGS += -EL -G 0
@@ -46,6 +46,11 @@ main.bin.bz2.uboot : $(OBJS) cfe/libcfe.a
 	mkimage -A mips -O linux -T kernel -C bzip2 -a 0x80010000 -e 0x80010000 -n 'mruby on YABM' -d main.bin.bz2 main.bin.bz2.uboot
 
 image :
+	build/work/mruby/build/host/bin/mrbc -ohoge.mrb $(RBSCRIPT)
+	@sha256 hoge.mrb
+	cat main.bin.bz2.uboot hoge.mrb > main.img
+
+preimage :
 	mrbc -ohoge.mrb $(RBSCRIPT)
 	@sha256 hoge.mrb
 	cat main.bin.bz2.uboot hoge.mrb > main.img
